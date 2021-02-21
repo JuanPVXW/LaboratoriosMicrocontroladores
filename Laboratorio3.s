@@ -67,29 +67,30 @@ PROCESSOR 16F887
     call    config_timr0
     banksel PORTA
 ;----------loop principal---------------------
- loop: 
+loop: 
     
-    btfss   T0IF    ;
-    goto    $-1
-    call    reiniciar_timr0
-    incf    PORTB
+    btfss   T0IF	;Revisamos si la bandera IF esta activa (Carry Tmr0)
+    goto    $-1		;Ejectuamos linea anterior
+    goto    loop	    ;Ejecutamos de nuevo toda la etiqueta 
+    call    reiniciar_timr0 ; Llamamos a la etiqueta del reincio del Tmr
+    incf    PORTB	    ;Incrementamos PORTB
     
-    btfsc   PORTA, 0	;Cuando no este presionado 
-    call    inc_portD
-    btfsc   PORTA, 1	;Revisar si no esta presionado 
-    call    dec_portD
+    btfsc   PORTA, 0	;Revisar que no este presionado 
+    call    inc_portD	;LLamamos a la etiqueta de incremento del PortD
+    btfsc   PORTA, 1	;Revisar que no esta presionado 
+    call    dec_portD	;Llamamos a la etiqueta de incremento del PortD
     
-    movf    PORTD, w
-    call    TablaDisplay
-    movwf   PORTC
+    movf    PORTD, w	;Mover el valor de "f"(PORTD) a w 
+    call    TablaDisplay    ;Llamamos la etiqueta de configuración de la Tabla
+    movwf   PORTC	;Mover w al registro f(PORTC)
     
-    incf    PORTD,w
-    subwf   PORTB,w
+    incf    PORTD,w	;Incrementamos PORTD y guardamos a w
+    subwf   PORTB,w	;Restamos w-f, PORTD - PORTB y guardamos en w
     
-    btfsc   STATUS,2
-    call    ResetTmr0
-    btfss   STATUS,2
-    bcf	    PORTA,2
+    btfsc   STATUS,2	;Revisamos si la bandera "Z" no esta activa del STATUS
+    call    ResetTmr0	;Llamamos a la etiqueta ResteTmr0
+    btfss   STATUS,2	;Revisamos si la bandera "Z" esta activa 
+    bcf	    PORTA,2	;Apagamos Led de alarma
     
     goto    loop    ;loop forever    
 ;-------Configuración Entradas y Salidas--------------------------   
@@ -103,24 +104,24 @@ PROCESSOR 16F887
     bcf	    STATUS, 6	;Banksel TRISA
     movlw   0xF0
     movwf   TRISB	;PORTA B salida
-    movlw   11111011B
-    movwf   TRISA
-    movlw   0xF0
-    movwf   TRISD
-    clrf    TRISC
+    movlw   11111011B	;Movemos lietal a W para definir I/O
+    movwf   TRISA	;w a f, para deinir I/O para PORTA
+    movlw   0xF0	
+    movwf   TRISD	;4 bits menos significativos de PORTD como salidas
+    clrf    TRISC	;Todo el PORTC como salida
     
     bcf	    STATUS, 5	;banco 00  - Banksel PORTA
     bcf	    STATUS, 6	
-    clrf    PORTB	;Valor incial 0 en puerto B
+    clrf    PORTB	;Valor incial 0 en puerto A, B, C y D
     clrf    PORTA
     clrf    PORTD
     clrf    PORTC   
     return
 ;------------sub rutinas---------------------
 ResetTmr0:
-    bsf	    PORTA,2
-    clrf    PORTB
-    return
+    bsf	    PORTA,2	;Encendemos el Led de alarma 
+    clrf    PORTB	;Reseteamos todo el puerto B 
+    return		
 inc_portD:
     ;call    delay_small
     btfsc   PORTA, 0	;Revisa de nuevo si no esta presionado
@@ -135,11 +136,11 @@ dec_portD:
     return
  config_timr0:
     banksel OPTION_REG   ;Banco de registros asociadas al puerto A
-    bcf	    T0CS    ;reloj interno clock selection
-    bcf	    PSA	    ;Prescaler 
+    bcf	    T0CS	;reloj interno clock selection
+    bcf	    PSA		;Prescaler 
     bsf	    PS2
     bsf	    PS1
-    bsf	    PS0	    ;PS = 111 Tiempo en ejecutar , 256
+    bsf	    PS0		;PS = 111 Tiempo en ejecutar , 256
     
     banksel TMR0
     call    reiniciar_timr0
@@ -147,7 +148,7 @@ dec_portD:
  reiniciar_timr0: 
     movlw   134
     movwf   TMR0
-    bcf	    T0IF
+    bcf	    T0IF	;Reseteamos la bandera de Carry del Tmr0 
     return
     
  config_reloj:
@@ -157,7 +158,6 @@ dec_portD:
     bcf	    IRCF0	;OSCCON configuración bit0 IRCF
     bsf	    SCS		;reloj interno , 250KHz
     return
-    
  ;delay_big:
     ;movlw	50		;valor inical del contador 
     ;movwf	cont+1
