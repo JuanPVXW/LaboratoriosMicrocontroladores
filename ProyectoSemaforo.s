@@ -153,15 +153,6 @@ Interr_Tmr0:
     
     Bcf	    STATUS, 0
     clrf    PORTD 
-    ;movlw   00000000B
-    ;subwf   banderas,w
-    ;btfsc   STATUS,2
-    
-    ;bSf	    STATUS, 0	    ;Dejo el STATUS 0 en un valor de 0
-             ;Limpio el puerto D
-    ;BTFSS   incremento,0     ; VERIFICAMOS SI EL LED PARPADEANTE ESTA APAGADO.
-    ;GOTO    DISP_OFF    ; SI ESTA APAGADO, VAMOS A LA SUBRRUINA DISP_OFF.
-    ;BSF     PORTB,0
     btfsc   banderas, 0	    ;Revisar bit 1 de banderas
     goto    displayunidad   ;Llamar a subrutina de displayunidad	    ;
     btfsc   banderas, 1	    ;Revisar bit 2 de banderas
@@ -183,7 +174,7 @@ Interr_Tmr0:
     movwf   banderas
 
 
-siguientedisplay:
+siguientedisplay:    
     movlw   4			;titilro sem3
     subwf   semaforo3, 0	;Guarda en w
     btfss   STATUS, 0
@@ -203,9 +194,7 @@ siguientedisplay:
     subwf   semaforo1,0
     btfss   STATUS, 0
     goto    RUTINA_TITILEO1
-    
     return
-    
 tit2:
     movlw   4
     subwf   semaforo2, 0	;Guarda en w
@@ -245,19 +234,43 @@ amarillo_semaforo1:
     bcf	    PORTA, 0
     bsf	    PORTA, 1
     bcf	    PORTA, 2
-    return    
+    movlw   0			;titileo Sem1
+    subwf   semaforo1, 0	;Guarda en w
+    btfsc   STATUS, 2
+    goto    rojoSE1
+    return
+rojoSE1:
+    bcf	    PORTA, 1
+    bsf	    PORTA, 2
+    return   
 amarillo_semaforo2:
     bcf	    PORTA, 3
     bsf	    PORTA, 4
     bcf	    PORTA, 5
-    return    
+    movlw   0			;titileo Sem1
+    subwf   semaforo2, 0	;Guarda en w
+    btfsc   STATUS, 2
+    goto    rojoSE2
+    return
+rojoSE2:
+    bcf	    PORTA, 4
+    bsf	    PORTA, 5
+    return      
 amarillo_semaforo3:
     bcf	    PORTA, 3
     bcf	    PORTA, 6
     bsf	    PORTA, 7
     bcf	    PORTB, 7
-    return    
-    
+    movlw   0			;titileo Sem1
+    subwf   semaforo3, 0	;Guarda en w
+    btfsc   STATUS, 2
+    goto    rojoSE3
+    return
+rojoSE3:
+    bcf	    PORTA, 6
+    bcf	    PORTA, 7
+    return      
+   
 displayunidad_SE1:
     movlw   00001000B
     movwf   banderas
@@ -342,6 +355,10 @@ int_ioCB:
     incf    estado
     movf    T0_Actual, W
     movwf   Tmr0_temporal
+    movf    SE2_Actual, w
+    movwf   SE2_temporal
+    movf    SE3_Actual, w
+    movwf   SE3_temporal
     goto    finalIOC
  
  interrup_estado_1:
@@ -363,68 +380,6 @@ int_ioCB:
     incf    estado
     goto    finalIOC
  interrup_estado_2:
-    ;btfss   PORTB, INC
-    ;incf    SE2_temporal, 1   ;se guarda en mismo registro 
-    ;movlw   21
-    ;subwf   SE2_temporal, 0
-    ;btfsc   STATUS, 2
-    ;goto    valor_minSemaforo2
-    
-    ;btfss   PORTB, DECRE
-    ;decf    SE2_temporal, 1
-    ;movlw   9
-    ;subwf   SE2_temporal, 0
-    ;btfsc   STATUS, 2
-    ;goto    valor_maxSemaforo2
-    
-    btfss   PORTB, MODO
-    incf    estado
-    goto    finalIOC
- interrup_estado_3:
-    ;btfss   PORTB, INC
-    ;incf    SE3_temporal, 1   ;se guarda en mismo registro 
-    ;movlw   21
-    ;subwf   SE3_temporal, 0
-    ;btfsc   STATUS, 2
-    ;goto    valor_minSemaforo3
-    
-    ;btfss   PORTB, DECRE
-    ;decf    SE3_temporal, 1
-    ;movlw   9
-    ;subwf   SE3_temporal, 0
-    ;btfsc   STATUS, 2
-    ;goto    valor_maxSemaforo3
-    
-    btfss   PORTB, MODO
-    incf    estado
-    goto    finalIOC
- interrup_estado_4:
-    btfss   PORTB, DECRE
-    clrf    estado
-    btfsc   PORTB, INC
-    goto    finalIOC
-    
-    movf    Tmr0_temporal, W
-    movwf   T0_Actual
-    movf    T0_Actual, W
-    movwf   semaforo1
-    
-    ;movf    SE2_temporal, W
-    ;movwf   SE2_Actual
-    ;movf    SE2_Actual, W
-    ;movwf   semaforo2 
-    
-    ;movf    SE3_temporal, W
-    ;movwf   SE3_Actual
-    ;movf    SE3_Actual, W
-    ;movwf   semaforo3
-    clrf    estado
- finalIOC:
-    bcf	    RBIF
-    return
-config_SE1:
-    return
-config_SE2:
     btfss   PORTB, INC
     incf    SE2_temporal, 1   ;se guarda en mismo registro 
     movlw   21
@@ -438,9 +393,62 @@ config_SE2:
     subwf   SE2_temporal, 0
     btfsc   STATUS, 2
     goto    valor_maxSemaforo2
+    
+    btfss   PORTB, MODO
+    incf    estado
+    goto    finalIOC
+ interrup_estado_3:
+    btfss   PORTB, INC
+    incf    SE3_temporal, 1   ;se guarda en mismo registro 
+    movlw   21
+    subwf   SE3_temporal, 0
+    btfsc   STATUS, 2
+    goto    valor_minSemaforo3
+    
+    btfss   PORTB, DECRE
+    decf    SE3_temporal, 1
+    movlw   9
+    subwf   SE3_temporal, 0
+    btfsc   STATUS, 2
+    goto    valor_maxSemaforo3
+    
+    btfss   PORTB, MODO
+    incf    estado
+    goto    finalIOC
+ interrup_estado_4:
+    btfss   PORTB, MODO
+    goto    comienzo_estado
+    btfss   PORTB, DECRE
+    clrf    estado
+    btfsc   PORTB, INC
+    goto    finalIOC2
+    
+    movf    Tmr0_temporal, W
+    movwf   T0_Actual
+    movf    T0_Actual, W
+    movwf   semaforo1
+    
+    movf    SE2_temporal, W
+    movwf   SE2_Actual
+    movf    SE2_Actual, W
+    movwf   semaforo2 
+    
+    movf    SE3_temporal, W
+    movwf   SE3_Actual
+    movf    SE3_Actual, W
+    movwf   semaforo3
+    clrf    estado
+ finalIOC2:
+    clrf    PORTA
+    bcf	    RBIF
     return
-config_SE3:
+ finalIOC:
+    bcf	    RBIF
     return
+comienzo_estado:
+    movlw   0x00
+    movwf   estado
+    goto    finalIOC
 valor_minSemaforo1:
     movlw   10
     movwf   Tmr0_temporal
@@ -478,7 +486,7 @@ Interr_Tmr2:
     return
     
   PSECT code, delta=2, abs
-  ORG 100h	;Posición para el código
+  ORG 180h	;Posición para el código
  ;------------------ TABLA -----------------------
   Tabla:
     clrf  PCLATH
@@ -511,14 +519,11 @@ Interr_Tmr2:
     call    config_tmr2
     call    config_InterrupEnable  
     banksel PORTA 
+    clrf    estado
     movlw   0x0F
     movwf   T0_Actual
     movf    T0_Actual, W
     movwf   semaforo1
-    bsf	    PORTA, 0
-    bcf	    PORTA, 1
-    bsf	    PORTA, 5
-    bsf	    PORTB, 7
     movlw   0x0A
     movwf   SE2_Actual
     movf    SE2_Actual, W
@@ -527,8 +532,12 @@ Interr_Tmr2:
     movwf   SE3_Actual
     movf    SE3_Actual, W
     movwf   semaforo3
-    clrf    estado
+    bsf	    PORTA, 0
+    bcf	    PORTA, 1
+    bsf	    PORTA, 5
+    bsf	    PORTB, 7
 
+    
 ;----------loop principal---------------------
  loop:
     btfss   TMR1IF	    ;Funcionamiento semaforo1
@@ -537,7 +546,6 @@ Interr_Tmr2:
     CALL INICIO_SEMAFORO1
     
     movf    semaforo1, w    ;Displays semaforo1
-    
     movwf   V1
     call    divcentenas	
     call    displaydecimal
@@ -582,19 +590,19 @@ Interr_Tmr2:
     goto    loop
  estado_2:
     bsf	    GIE
-    ;movf    SE2_temporal, w
-    ;movwf   V2
-    ;call    divcentenas_SE1	//Subrutina de división para contador DECIMAL 
-    ;call    displaydecimal_SE1
+    movf    SE2_temporal, w
+    movwf   V2
+    call    divcentenas_SE1	//Subrutina de división para contador DECIMAL 
+    call    displaydecimal_SE1
     movlw   010B
     movwf   PORTE
     goto    loop
  estado_3:
     bsf	    GIE
-    ;movf    SE3_temporal, w
-    ;movwf   V2
-    ;call    divcentenas_SE1	//Subrutina de división para contador DECIMAL 
-    ;call    displaydecimal_SE1
+    movf    SE3_temporal, w
+    movwf   V2
+    call    divcentenas_SE1	//Subrutina de división para contador DECIMAL 
+    call    displaydecimal_SE1
     movlw   011B
     movwf   PORTE
     goto    loop
@@ -604,7 +612,8 @@ Interr_Tmr2:
     movwf   PORTE
     goto    loop
 ;------------sub rutinas---------------------
-INICIO_SEMAFORO1:
+INICIO_SEMAFORO1: 
+    
     movlw   0x00
     subwf   semaforo1
     btfsc   STATUS, 2
@@ -612,7 +621,9 @@ INICIO_SEMAFORO1:
     decf    semaforo1
     return 
 INICIO_SEMAFORO2:
-    bsf     PORTA,3
+    bsf	    PORTA, 3	;verdeSE2
+    bcf	    PORTA, 5	;Rojo SE2
+    bsf	    PORTB, 7	;Rojo SE3
     clrf    semaforo1   
     movlw   0x00
     subwf   semaforo2
@@ -622,8 +633,10 @@ INICIO_SEMAFORO2:
     return 
     
 INICIO_SEMAFORO3:
-    
-    bsf     PORTA,6
+    bsf	    PORTA, 6
+    bsf	    PORTA, 2
+    bsf	    PORTA, 5
+    bcf     PORTB, 7
     clrf    semaforo2
     movlw   0x00
     subwf   semaforo3 
@@ -633,23 +646,18 @@ INICIO_SEMAFORO3:
     return 
     
 asignarvalor:
-    bsf	    PORTA, 0
-    bcf	    PORTA, 1
-    bcf	    PORTA, 2
-    bcf	    PORTA, 3
-    bcf	    PORTA, 4
-    bsf	    PORTA, 5
-    bcf	    PORTA, 6
-    bcf	    PORTA, 7
-    bsf	    PORTB, 7
+    clrf    PORTA
     movf    T0_Actual, W
     movwf   semaforo1
     movf    SE2_Actual, W
     movwf   semaforo2
     movf    SE3_Actual, W
     movwf   semaforo3
-    bcf	    PORTA, 1
+    movlw   00100001B
+    movwf   PORTA
+    bsf	    PORTB, 7
     return
+
 ;------------------DivisiónRutinaPrincipal-------------------
 displaydecimal:
     movf    centena, w
@@ -837,9 +845,11 @@ config_io:
     clrf    TRISC
     clrf    TRISD
     clrf    TRISE
-    bsf	    TRISB, MODO
-    bsf	    TRISB, INC
-    bsf	    TRISB, DECRE
+    movlw   00000111B
+    movwf   TRISB
+    ;bsf	    TRISB, MODO
+    ;bsf	    TRISB, INC
+    ;bsf	    TRISB, DECRE
     
     bcf	    OPTION_REG,	7   ;RBPU Enable bit - Habilitar
     bsf	    WPUB, MODO
