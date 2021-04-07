@@ -1,8 +1,8 @@
-; Documento: 
+; Documento: Proyecto 1 - Microcontroladores 
 ; Dispositivo: PIC16F887
 ; Autor: Juan Antonio Peneleu Vásquez 
 ; Programa: semaforo
-; Creado: 30 febrereo, 2021
+; Creado: 20 Marzo, 2021
 ;-----------------------------------
 PROCESSOR 16F887
 #include <xc.inc>
@@ -67,7 +67,7 @@ reiniciar_tmr2 macro	//Macro reinicio Tmr2
     unidad:	DS  1  
     valor_actual:   DS	1
   
-    V2:		DS  1	;configsemaforo1
+    V2:		DS  1	;configsemaforo123
     centena2:	DS  1
     centena22:	DS  1
     decena2:	DS  1
@@ -153,28 +153,27 @@ Interr_Tmr0:
     
     Bcf	    STATUS, 0
     clrf    PORTD 
-    btfsc   banderas, 0	    ;Revisar bit 1 de banderas
-    goto    displayunidad   ;Llamar a subrutina de displayunidad	    ;
-    btfsc   banderas, 1	    ;Revisar bit 2 de banderas
-    goto    displaydecena   ;Llamar a subrutina de displaydecena
-    btfsc   banderas, 2	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 0		;Revisar bit 1 de banderas
+    goto    displayunidad	;Llamar a subrutina de displayunidad	    ;
+    btfsc   banderas, 1		;Revisar bit 2 de banderas
+    goto    displaydecena	;Llamar a subrutina de displaydecena
+    btfsc   banderas, 2		;Revisar bit 2 de banderas
     goto    displayunidad_SE1   ;Llamar a subrutina de displaydecena
-    btfsc   banderas, 3	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 3		;Revisar bit 2 de banderas
     goto    displaydecen_SE1   ;Llamar a subrutina de displaydecena
     
-    btfsc   banderas, 4	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 4		;Revisar bit 2 de banderas
     goto    displayunidad_SE3   ;Llamar a subrutina de displaydecena
-    btfsc   banderas, 5	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 5		;Revisar bit 2 de banderas
     goto    displaydecen_SE3   ;Llamar a subrutina de displaydecena
-    btfsc   banderas, 6	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 6		;Revisar bit 2 de banderas
     goto    displayunidad_SE4   ;Llamar a subrutina de displaydecena
-    btfsc   banderas, 7	    ;Revisar bit 2 de banderas
+    btfsc   banderas, 7		;Revisar bit 2 de banderas
     goto    displaydecen_SE4   ;Llamar a subrutina de displaydecena
     movlw   00000001B
     movwf   banderas
 
-
-siguientedisplay:    
+Verificaciones:    
     movlw   4			;titilro sem3
     subwf   semaforo3, 0	;Guarda en w
     btfss   STATUS, 0
@@ -271,59 +270,58 @@ rojoSE3:
     bcf	    PORTA, 7
     return      
    
-displayunidad_SE1:
+displayunidad_SE1:	    //Display de configuraciones
     movlw   00001000B
     movwf   banderas
-    movf    unidad22, w	    //Mover el valor de centena1 (Tabla) a w
-    movwf   PORTC	    //Mover w a PORTD
-    bsf	    PORTD, 7	    //Encender bit4 de PORTB para transistor 
-    goto    siguientedisplay
-displaydecen_SE1:
+    movf    unidad22, w	    //Mover el valor de unidad22 (Tabla) a w
+    movwf   PORTC	    //Mover w a PORTC
+    bsf	    PORTD, 7	    //Encender bit7 de PORTD para transistor 
+    goto    Verificaciones
+displaydecen_SE1:	    //Display de configuraciones
     movlw   00010000B
     movwf   banderas
-    movf    decena22, w	    //Mover el valor de centena1 (Tabla) a w
-    movwf   PORTC	    //Mover w a PORTD
-    bsf	    PORTD, 6	    //Encender bit4 de PORTB para transistor 
-    goto    siguientedisplay
-displaydecena:
+    movf    decena22, w	    //Mover el valor de decena22 (Tabla) a w
+    movwf   PORTC	    //Mover w a PORTC
+    bsf	    PORTD, 6	    //Encender bit6 de PORTD para transistor 
+    goto    Verificaciones
+displaydecena:		    //Semaforo1
     movlw   00000100B
     movwf   banderas
     movf    decena1, w	    //Mover el valor de decena1(Tabla) a w
-    movwf   PORTC	    //Mover el valor de w a PORTD
+    movwf   PORTC	    //Mover el valor de w a PORTC
     bsf	    PORTD, 0	    //Encender bit 5 PORTB para transistor
-    goto    siguientedisplay	//Siguiente display
-displayunidad:
+    goto    Verificaciones	
+displayunidad:		    //Semaforo1
     movlw   00000010B
     movwf   banderas  
     movf    unidad1, w	    //Mover el valor de Unidad1(Tabla) a w
     movwf   PORTC	    //mover el valor de w a PORTD
     bsf	    PORTD, 1	    //Encender bit 5 de PORTB para transistor
-    goto    siguientedisplay	//Siguiente display
+    goto    Verificaciones	
     
-displayunidad_SE3:
+displayunidad_SE3:	    //semaforo2
     movlw   00100000B
     movwf   banderas
     movf    unidad33, w	    //Mover el valor de centena1 (Tabla) a w
     movwf   PORTC	    //Mover w a PORTD
     bsf	    PORTD, 3	    //Encender bit4 de PORTB para transistor 
-    goto    siguientedisplay
-displaydecen_SE3:
+    goto    Verificaciones
+displaydecen_SE3:	    //semaforo2
     movlw   01000000B
     movwf   banderas
     movf    decena33, w	    //Mover el valor de centena1 (Tabla) a w
     movwf   PORTC	    //Mover w a PORTD
     bsf	    PORTD, 2	    //Encender bit4 de PORTB para transistor 
-    goto    siguientedisplay    
+    goto    Verificaciones    
     
-displayunidad_SE4:
+displayunidad_SE4:	    //semaforo3
     movlw   10000000B
     movwf   banderas
     movf    unidad44, w	    //Mover el valor de centena1 (Tabla) a w
     movwf   PORTC	    //Mover w a PORTD
-    bsf	    PORTD, 5	//Encender bit4 de PORTB para transistor 
-    
-    goto    siguientedisplay
-displaydecen_SE4:
+    bsf	    PORTD, 5	//Encender bit4 de PORTB para transistor    
+    goto    Verificaciones
+displaydecen_SE4:	    //semaforo3
     movlw   00000001B
     movwf   banderas
     movf    decena44, w	    //Mover el valor de centena1 (Tabla) a w
@@ -331,9 +329,9 @@ displaydecen_SE4:
     bsf	    PORTD, 4	    //Encender bit4 de PORTB para transistor 
     movlw   0x00
     movwf   banderas	    ;Mover literal a banderas
-    goto    siguientedisplay    
+    goto    Verificaciones    
         
-
+;----Estados-Interrupciones--------------------------
 int_ioCB: 
     movf    estado, W
     clrf    PCLATH		
@@ -346,10 +344,10 @@ int_ioCB:
     goto    interrup_estado_4
     goto    finalIOC
     goto    finalIOC
- interrup_estado_0:
+ interrup_estado_0:		//Modo funcionamiento normal
     banksel PORTB
-    BCF     PORTA,1
-    BSF     PORTA,0
+    bcf     PORTA,1
+    bsf     PORTA,0
     btfsc   PORTB, MODO
     goto    finalIOC
     incf    estado
@@ -361,7 +359,7 @@ int_ioCB:
     movwf   SE3_temporal
     goto    finalIOC
  
- interrup_estado_1:
+ interrup_estado_1:		//configuración semaforo1
     btfss   PORTB, INC
     incf    Tmr0_temporal, 1   ;se guarda en mismo registro 
     movlw   21
@@ -379,7 +377,7 @@ int_ioCB:
     btfss   PORTB, MODO
     incf    estado
     goto    finalIOC
- interrup_estado_2:
+ interrup_estado_2:		//configuracion semaforo2
     btfss   PORTB, INC
     incf    SE2_temporal, 1   ;se guarda en mismo registro 
     movlw   21
@@ -397,7 +395,7 @@ int_ioCB:
     btfss   PORTB, MODO
     incf    estado
     goto    finalIOC
- interrup_estado_3:
+ interrup_estado_3:		//configuracion semaforo3
     btfss   PORTB, INC
     incf    SE3_temporal, 1   ;se guarda en mismo registro 
     movlw   21
@@ -415,7 +413,7 @@ int_ioCB:
     btfss   PORTB, MODO
     incf    estado
     goto    finalIOC
- interrup_estado_4:
+ interrup_estado_4:		//modo de desicion 
     btfss   PORTB, MODO
     goto    comienzo_estado
     btfss   PORTB, DECRE
@@ -438,14 +436,16 @@ int_ioCB:
     movf    SE3_Actual, W
     movwf   semaforo3
     clrf    estado
- finalIOC2:
+ finalIOC2:		//subrutina para INC ultimo modo
     clrf    PORTA
+    bsf	    PORTA, 5
+    bsf	    PORTB, 7
     bcf	    RBIF
     return
  finalIOC:
     bcf	    RBIF
     return
-comienzo_estado:
+comienzo_estado:	//subrutina push Modo ultimo
     movlw   0x00
     movwf   estado
     goto    finalIOC
@@ -520,10 +520,11 @@ Interr_Tmr2:
     call    config_InterrupEnable  
     banksel PORTA 
     clrf    estado
-    movlw   0x0F
+    movlw   0x0A
     movwf   T0_Actual
     movf    T0_Actual, W
     movwf   semaforo1
+    ;incf    semaforo1
     movlw   0x0A
     movwf   SE2_Actual
     movf    SE2_Actual, W
@@ -544,22 +545,7 @@ Interr_Tmr2:
     goto    $-1
     reiniciar_Tmr1
     CALL INICIO_SEMAFORO1
-    
-    movf    semaforo1, w    ;Displays semaforo1
-    movwf   V1
-    call    divcentenas	
-    call    displaydecimal
-    
-    movf    semaforo2, w    ;Displays semaforo2    
-    movwf   V3
-    call    divcentenas_SE3	
-    call    displaydecimal_SE3
-    
-    movf    semaforo3, w    ;Displays semaforo1    
-    movwf   V4
-    call    divcentenas_SE4	
-    call    displaydecimal_SE4
-       
+ 
     bcf	    GIE
     movf    estado, W
     clrf    PCLATH
@@ -612,15 +598,37 @@ Interr_Tmr2:
     movwf   PORTE
     goto    loop
 ;------------sub rutinas---------------------
-INICIO_SEMAFORO1: 
+INICIO_SEMAFORO1:   
+    movf    semaforo1, w
+    addwf   V4
+    movf    SE2_Actual, w
+    addwf   V4
+    call    divcentenas_SE4	
+    call    displaydecimal_SE4
     
     movlw   0x00
     subwf   semaforo1
     btfsc   STATUS, 2
     goto    INICIO_SEMAFORO2
     decf    semaforo1
+   
+    movf    semaforo1, w    ;Displays semaforo1
+    movwf   V1
+    movwf   V3
+    call    divcentenas	
+    call    displaydecimal
+    call    divcentenas_SE3	
+    call    displaydecimal_SE3
+    
     return 
 INICIO_SEMAFORO2:
+    movf    semaforo2, w
+    addwf   V1
+    movf    SE3_Actual, w
+    addwf   V1
+    call    divcentenas	
+    call    displaydecimal
+    
     bsf	    PORTA, 3	;verdeSE2
     bcf	    PORTA, 5	;Rojo SE2
     bsf	    PORTB, 7	;Rojo SE3
@@ -630,9 +638,24 @@ INICIO_SEMAFORO2:
     btfsc   STATUS, 2
     goto    INICIO_SEMAFORO3
     decf    semaforo2
-    return 
     
+    movf    semaforo2, w    ;Displays semaforo2
+    movwf   V3
+    movwf   V4
+    call    divcentenas_SE3	
+    call    displaydecimal_SE3
+    call    divcentenas_SE4	
+    call    displaydecimal_SE4
+
+    return
 INICIO_SEMAFORO3:
+    movf    semaforo3, w
+    addwf   V3
+    movf    SE2_Actual, w
+    addwf   V3
+    call    divcentenas_SE3	
+    call    displaydecimal_SE3
+    
     bsf	    PORTA, 6
     bsf	    PORTA, 2
     bsf	    PORTA, 5
@@ -643,10 +666,17 @@ INICIO_SEMAFORO3:
     btfsc   STATUS, 2
     goto    asignarvalor
     decf    semaforo3
-    return 
     
+    movf    semaforo3, w    ;Displays semaforo1 
+    movwf   V4
+    movwf   V1
+    call    divcentenas_SE4
+    call    displaydecimal_SE4
+    call    divcentenas	
+    call    displaydecimal
+    
+    return 
 asignarvalor:
-    clrf    PORTA
     movf    T0_Actual, W
     movwf   semaforo1
     movf    SE2_Actual, W
@@ -847,10 +877,7 @@ config_io:
     clrf    TRISE
     movlw   00000111B
     movwf   TRISB
-    ;bsf	    TRISB, MODO
-    ;bsf	    TRISB, INC
-    ;bsf	    TRISB, DECRE
-    
+
     bcf	    OPTION_REG,	7   ;RBPU Enable bit - Habilitar
     bsf	    WPUB, MODO
     bsf	    WPUB, INC
