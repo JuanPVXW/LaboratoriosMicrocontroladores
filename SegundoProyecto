@@ -1,8 +1,8 @@
 /*
- * File:   main9.c
+ * File:   SegProyecto.c
  * Author: Juan Peneleu 15446
  *
- * 
+ * Created on 1 de junio de 2021, 07:14 PM
  */
 //Configuración PIC16F887
 // CONFIG1
@@ -26,16 +26,21 @@
 #include <stdint.h>
 #include <pic16f887.h>
 /*Declaración variables*/
-int unidades;
-int decenas = 0;
-int centenas = 0;
-int banderas = 0;
-int v1;
+uint8_t bandera;
+uint8_t bandera2 = 0;
+uint8_t Titileo = 0;
 //***********Prototipos de funciones************
 void setup(void);           /*funcion principal */
 //**************Interrupciones**************
 void __interrupt()isr(void) /*interrupciones*/
 {
+    if (PIR1bits.TMR1IF == 1)              /*condicion si T0IF es 1*/
+    {
+        Titileo++;              /*Limpiar PORTC*/
+        TMR1H = 0x0B;             /*Asignar valor a registro TMR0*/
+        TMR1L = 0xDC;
+        PIR1bits.TMR1IF = 0;               /*Limpiar bandera de interrupción*/
+    }
     if (PIR1bits. ADIF == 1)
     {
         if (ADCON0bits.CHS == 5)
@@ -44,11 +49,45 @@ void __interrupt()isr(void) /*interrupciones*/
             CCP1CONbits.DC1B1 = ADRESH & 0b01; 
             CCP1CONbits.DC1B0 = ADRESL>>7;
         }
-        else
+        if (ADCON0bits.CHS == 6)
         {
             CCPR2L   = (ADRESH>>2)+248 ;         //Aumentamos el Puerto C cuando se preciona el boton
             CCP2CONbits.DC2B1 = ADRESH & 0b01;
             CCP2CONbits.DC2B0 = (ADRESL>>7);
+        }
+        if (ADCON0bits.CHS == 7)
+        {
+            if (ADRESH > 200)
+            {
+                PORTAbits.RA2 = Titileo; 
+            }
+            if (ADRESH < 200 & ADRESH > 0)
+            {
+                PORTAbits.RA2 = 0; 
+                PORTAbits.RA3 = 0;
+            }
+
+            if (ADRESH == 0)
+            {
+                PORTAbits.RA3 = Titileo;
+            }
+        }
+        if (ADCON0bits.CHS == 10)
+        {
+            if (ADRESH > 200)
+            {
+                PORTAbits.RA4 = 1; 
+            }
+            if (ADRESH < 200 & ADRESH > 0)
+            {
+                PORTAbits.RA4 = 0; 
+                PORTAbits.RA5 = 0;
+            }
+
+            if (ADRESH == 0)
+            {
+                PORTAbits.RA5 = 1;
+            }
         }
             PIR1bits.ADIF = 0;
     }
@@ -67,28 +106,62 @@ void main(void) {
             {
                 ADCON0bits.CHS = 6;
             }
-            else
-            {
-                ADCON0bits.CHS = 5;
-            }
                 __delay_us(50);             //Delay para los 11 ciclos de TAP 
                 ADCON0bits.GO = 1;
-        }    
+            if (ADCON0bits.CHS == 6)
+            {
+                ADCON0bits.CHS = 7;
+                __delay_us(50);             //Delay para los 11 ciclos de TAP 
+                ADCON0bits.GO = 1;
+            }
+            if (ADCON0bits.CHS == 7)
+            {
+                ADCON0bits.CHS = 10;
+            
+                __delay_us(50);             //Delay para los 11 ciclos de TAP 
+                ADCON0bits.GO = 1;
+            }
+            if (ADCON0bits.CHS == 10)
+            {
+                ADCON0bits.CHS = 5;
+            
+                __delay_us(50);             //Delay para los 11 ciclos de TAP 
+                ADCON0bits.GO = 1;
+            }
+        }
+        if (RB0 == 0)       /*condicion si RB0 es 0*/
+        {
+            bandera = 1;    /*Asignar valor a variable*/
+            PORTAbits.RA0 = 1;
+            PORTAbits.RA1 = 0;
+        }
+        else                /*si RB0 es diferente de 0*/
+        {
+            if (bandera == 1){  /*si bandera es 1*/
+            PORTAbits.RA0 = 0;             /*incrementar PORTA*/
+            bandera = 0;        /*Asignar valor a variable*/
+            }
+        }
     }
 }
 //*************Funciones************************
 void setup(void)
 { 
     //*******configuración io entradas y salidas****
-    ANSEL = 0b01100000;     //AN5 Y AN6
-    ANSELH = 0x00;     //Salidas Digitales
+    ANSEL = 0b11100000;     //AN5,AN6 Y AN7
+    ANSELH = 0x04;     //AN10
     
-    TRISE = 0x03; 
-    TRISC = 0x00;      
-    //OPTION_REGbits.nRBPU = 0; 
-    //WPUB = 0b00000011;      //Habilitar Pull interno   
+    TRISE = 0b00000111;
+    TRISB = 0b00000011;
+    TRISC = 0x00; 
+    TRISA = 0x00;
+    OPTION_REGbits.nRBPU = 0; 
+    WPUB = 0b00000001;      //Habilitar Pull interno   
+    
     PORTC = 0x00; 
     PORTE = 0x00;
+    PORTA = 0x00;
+    PORTB = 0x00; 
     //configuración IOC
     //IOCBbits. IOCB0 = 1; 
     //IOCBbits. IOCB1 = 1;
@@ -133,11 +206,27 @@ void setup(void)
     
     TRISCbits.TRISC2 = 0;           //Se resetean las salidas CCPx
     TRISCbits.TRISC1 = 0; 
+
+    //Configuración Tmr1
+    T1CONbits.TMR1GE = 0; 
+    T1CONbits.TMR1CS = 0; 
+    T1CONbits.TMR1ON = 1; 
+    T1CONbits.T1OSCEN = 0; 
+    T1CONbits.T1CKPS1 = 1;
+    T1CONbits.T1CKPS0 = 0;            
+    TMR1H = 0x0B;             /*Asignar valor a registro TMR0*/
+    TMR1L = 0xDC;
+    
+    
     //configuración interrupción
     INTCONbits. GIE = 1; 
     INTCONbits.PEIE = 1;
     PIE1bits.ADIE = 1;
-    PIR1bits.ADIF = 0;      
+    PIR1bits.ADIF = 0; 
+    //INTCONbits. T0IE = 1;
+    //INTCONbits. T0IF = 0;
+    PIE1bits.TMR1IE = 1;
+    PIR1bits.TMR1IF = 0; 
     //Limpiar bandera de ADC
     //INTCONbits. RBIE = 1;
     //INTCONbits. RBIF = 0;
