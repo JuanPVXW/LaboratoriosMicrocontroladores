@@ -25,14 +25,11 @@
 #include <xc.h>
 #include <stdint.h>
 #include <pic16f887.h>
-#include "converADC.h"
+#include "converADC.h"      //Importar libreria creada para ADC 
 uint8_t contador = 0;       /*Declaración variables*/
 uint8_t var1 = 0;
 uint8_t hex1 = 0;
 uint8_t hex2 = 0;
-int unidades;
-int decenas = 0;
-int centenas = 0;
 int banderas = 0;
 int v1;
 //***********Prototipos de funciones************
@@ -45,17 +42,17 @@ void __interrupt()isr(void) /*interrupciones*/
     //{
         //var1 = ADRESH;
     //}
-    recibir_valoresADC();
-    PIR1bits.ADIF = 0;
-    if(RBIF == 1)
+    recibir_valoresADC();   //Funcion de libreria_Reibe valores del Adresh
+    PIR1bits.ADIF = 0;      //Limpiar bandera de interrupcion
+    if(RBIF == 1)           //Bandera IOCB
     {
-        if(RB0 == 0)
+        if(RB0 == 0)        //Si boton en RB0 esta presionado
         {
-            PORTA++;
+            PORTA++;        //Aumenta contador del PORTA
         }
-        if(RB1 == 0)
+        if(RB1 == 0)        //Boton en RB1 esta presionado
         {
-            PORTA--;
+            PORTA--;        //Decrementa PORTA
         }
     }
     INTCONbits.RBIF = 0;
@@ -66,7 +63,7 @@ void __interrupt()isr(void) /*interrupciones*/
         T0IF = 0;               /*Limpiar bandera de interrupción*/
         if (banderas == 0)      /*condicion si banderas es 0*/
         {
-            v1 = hex1;      /*asignar unidades a v1 para asignar tabla*/
+            v1 = hex1;      /*asignar NIBLE a v1 para asignar tabla*/
             PORTD = tabla(v1);  /*valor de tabla a PORTD*/
             RC0 = 1;            /*Enceder transistor para displays*/
             banderas = 1;       /*Asignar valor a banderas*/
@@ -74,7 +71,7 @@ void __interrupt()isr(void) /*interrupciones*/
         }
         if (banderas == 1)      /*condicion si banderas es 1*/
         {
-            v1 = hex2;       /*asignar decenas a v1 para asignar tabla*/
+            v1 = hex2;       /*asignar NIBLE2 a v1 para asignar tabla*/
             PORTD = tabla(v1);  /*valor de tabla a PORTD*/
             RC1 = 1;            /*Enceder transistor para displays*/
             banderas = 0;       /*Asignar valor a banderas*/
@@ -90,18 +87,18 @@ void main(void) {
     //*********************************LoopPrincipal*********
     while(1)
     {
-        hex1 = var1 & 0x0F;
-        hex2 = (var1>>4) & 0x0F;
+        hex1 = var1 & 0x0F;         //Nible mas significativo
+        hex2 = (var1>>4) & 0x0F;    //nible menos significativo
         //if(ADCON0bits.GO == 0)
         //{
             //__delay_us(50);
         //}
         //ADCON0bits.GO = 1;
-        inicio_conversionADC();
-        
-        if(var1 >= PORTA)
+        inicio_conversionADC();     //Funcion de libreria 
+        //da inicio a la conversión ADC
+        if(var1 >= PORTA)       //si el contador de ADC es mayor a contador IOCB 
         {
-            RC7 = 1;
+            RC7 = 1;            //Encender RC7 = LED
         }
         else
         {
@@ -195,8 +192,8 @@ void setup(void)
     OSCCONbits. IRCF0 = 0;  //4Mhz
     OSCCONbits. SCS = 1;
     //configuración Tmr0
-    OPTION_REGbits. T0CS = 0;
-    OPTION_REGbits. PSA = 0;
+    OPTION_REGbits. T0CS = 0;   
+    OPTION_REGbits. PSA = 0;    //Selección preescaler
     OPTION_REGbits. PS2 = 1;    //Preescaler 
     OPTION_REGbits. PS1 = 1;
     OPTION_REGbits. PS0 = 1;
@@ -206,17 +203,17 @@ void setup(void)
     ADCON1bits.VCFG0 = 0;       //Voltaje VDD referencia
     ADCON1bits.VCFG1 = 0;       //Voltaje Vss referencia
     
-    ADCON0bits.ADCS = 1;        //ADC Clock FOSC/8
+    ADCON0bits.ADCS = 1;        //ADC Clock FOSC = 4Mhz/8
     ADCON0bits.CHS = 5;         //Canal 5
     __delay_us(100);
     ADCON0bits.ADON = 1;        //Habiliar Modulo de ADC
     //configuración interrupción
-    INTCONbits. GIE = 1;
-    INTCONbits. RBIE = 1;
+    INTCONbits. GIE = 1;        //Globales
+    INTCONbits. RBIE = 1;       //IOCB
     INTCONbits. RBIF = 0;
-    INTCONbits.PEIE = 1;
-    PIE1bits.ADIE = 1;
+    INTCONbits.PEIE = 1;        //Perifericas
+    PIE1bits.ADIE = 1;          //ADC
     PIR1bits.ADIF = 0;      
-    INTCONbits. T0IE = 1;
+    INTCONbits. T0IE = 1;       //Tmr0
     INTCONbits. T0IF = 0;
 }
